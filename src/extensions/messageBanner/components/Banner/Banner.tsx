@@ -235,13 +235,16 @@ const Banner = (props: IBannerProps) => {
     return tokens.reduce((text, tokenItem) => text.replace(tokenItem.token, tokenItem.value), textWithTokens);
   };
 
-  const imageUrl = (settings.imageUrl || '').trim();
-  const imageLinkUrl = (settings.imageLinkUrl || '').trim();
-  const alt = settings.imageAltText || '';
-  const text = (settings.text || '').trim();
+  const imageUrl = (settings.imageUrl || "https://upload.wikimedia.org/wikipedia/commons/1/13/Cute_kitten.jpg").trim();
+  const imageLinkUrl = (settings.imageLinkUrl || "https://upload.wikimedia.org/wikipedia/commons/1/13/Cute_kitten.jpg").trim();
+  const alt = settings.imageAltText || 'Text';
+  const text = (settings.text || 'Text').trim();
 
   // אם אין תמונה וטקסט, משתמש רגיל לא רואה כלום; אדמין כן (כדי שיוכל לערוך עם העיפרון)
-  if (!imageUrl && !text && !isCurrentUserAdmin) return null;
+  if (!imageUrl && !text && !isCurrentUserAdmin){
+    console.log("🛖✍️🌯 no image!!!")
+    return null;
+  } 
 
   return (
     <div id={BANNER_CONTAINER_ID}>
@@ -282,6 +285,7 @@ const Banner = (props: IBannerProps) => {
               onClick={handleOpenClick}
             />
           )}
+          hello
         </div>
           
         </div>

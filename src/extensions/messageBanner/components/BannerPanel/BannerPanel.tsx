@@ -176,7 +176,8 @@ import * as strings from 'MessageBannerApplicationCustomizerStrings';
 import { PanelType, Panel } from 'office-ui-fabric-react/lib/Panel';
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
-import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
+//import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
+import { FilePicker, IFilePickerResult } from "@pnp/spfx-controls-react/lib/FilePicker";
 import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 
@@ -184,98 +185,7 @@ const BannerPanel = (props: IBannerPanelProps) => {
   const [isUploading, setIsUploading] = React.useState(false);
   const [uploadError, setUploadError] = React.useState<string | null>(null);
 
-  const getDigest = async (): Promise<string> => {
-    const webUrl = props.context.pageContext.web.absoluteUrl;
 
-    // fallback: לפעמים SPFx כבר שם digest זמין
-    const fallback = (props.context.pageContext as any)?.legacyPageContext?.formDigestValue;
-    try {
-      const res: SPHttpClientResponse = await props.context.spHttpClient.post(
-        `${webUrl}/_api/contextinfo`,
-        SPHttpClient.configurations.v1,
-        {
-          headers: {
-            accept: 'application/json;odata=verbose',
-            'content-type': 'application/json;odata=verbose'
-          }
-        }
-      );
-
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(`contextinfo failed. HTTP ${res.status}. ${t}`);
-      }
-
-      const json: any = await res.json();
-      const digest = json?.d?.GetContextWebInformation?.FormDigestValue;
-      if (!digest) throw new Error('contextinfo returned no FormDigestValue');
-
-      return digest;
-    } catch (e) {
-      if (fallback) return fallback;
-      throw e;
-    }
-  };
-  const uploadToSiteAssets = async (file: File): Promise<string> => {
-    const webUrl = props.context.pageContext.web.absoluteUrl;
-    const webRel = (props.context.pageContext.web.serverRelativeUrl || '').replace(/\/$/, '');
-    const folderRel = `${webRel}/SiteAssets`.replace(/'/g, "''");
-
-    const digest = await getDigest();
-    const buffer = await file.arrayBuffer();
-    const safeName = file.name.replace(/'/g, "''");
-
-    const uploadUrl =
-      `${webUrl}/_api/web/GetFolderByServerRelativeUrl('${folderRel}')/Files/add(url='${safeName}',overwrite=true)`;
-
-    const res: SPHttpClientResponse = await props.context.spHttpClient.post(
-      uploadUrl,
-      SPHttpClient.configurations.v1,
-      {
-        headers: {
-          accept: 'application/json;odata=nometadata',
-          'X-RequestDigest': digest
-        },
-        body: buffer as any
-      }
-    );
-
-    const out: any = await res.json();
-    if (!res.ok) {
-      throw new Error(`Upload failed. HTTP ${res.status}`);
-    }
-    //const serverRelUrl = out.ServerRelativeUrl || out?.d?.ServerRelativeUrl;
-    //return `${window.location.origin}${serverRelUrl}`;
-    const serverRelUrl =
-    out?.ServerRelativeUrl ||
-    out?.d?.ServerRelativeUrl ||
-    out?.ServerRelativePath?.DecodedUrl ||
-    out?.d?.ServerRelativePath?.DecodedUrl;
-
-    // FALLBACK: אם התגובה לא מחזירה URL – נבנה אותו בעצמנו
-    const fallbackRel = `${webRel}/SiteAssets/${encodeURIComponent(file.name)}`;
-    const finalRel = serverRelUrl || fallbackRel;
-
-    return `${window.location.origin}${finalRel}`;
-  };
-
-  const onPickFile = async (ev: React.ChangeEvent<HTMLInputElement>) => {
-  const input = ev.currentTarget;
-  const file = input.files?.[0];
-    if (!file) return;
-
-    try {
-      setUploadError(null);
-      setIsUploading(true);
-      const url = await uploadToSiteAssets(file);
-      props.onFieldChange({ imageUrl: url });
-    } catch (e: any) {
-      setUploadError(e?.message || 'Upload failed');
-    } finally {
-      setIsUploading(false);
-      input.value = ''; // מאפשר לבחור שוב אותו קובץ
-    }
-  };
 
   return (
     <Panel
@@ -319,14 +229,34 @@ const BannerPanel = (props: IBannerPanelProps) => {
 
           <div className={styles.FieldSection}>
             <Label className={styles.FieldLabel}>Upload image from computer</Label>
-            <input type="file" accept="image/*" onChange={onPickFile} />
-            {isUploading && <div>Uploading...</div>}
-            {uploadError && <div style={{ color: 'red' }}>{uploadError}</div>}
+            <FilePicker
+              context={props.context as any}
+              accepts={[".png", ".jpg", ".jpeg", ".gif", ".webp"]}
+              buttonLabel="Upload / Select image"
+
+              hideRecentTab={true}
+              storeLastActiveTab={false}
+
+              hideStockImages={true}
+              hideWebSearchTab={true}
+              hideOrganisationalAssetTab={true}
+              hideOneDriveTab={true}
+              hideSiteFilesTab={true}
+              hideLocalMultipleUploadTab={true}
+              hideLinkUploadTab={false}
+
+              onSave={(files: IFilePickerResult[]) => {
+                const f = files?.[0];
+                if (!f?.fileAbsoluteUrl) return;
+                props.onFieldChange({ imageUrl: f.fileAbsoluteUrl });
+              }}
+            />
+            
           </div>
           <div className={styles.FieldSection}>
             <Label className={styles.FieldLabel}>{strings.BannerPanelFieldImageUrlLabel}</Label>
             <TextField
-              value={props.settings.imageUrl || ''}
+              value={props.settings.imageUrl || 'https://upload.wikimedia.org/wikipedia/commons/1/13/Cute_kitten.jpg'}
               placeholder="https://..."
               onChange={(e, value) => props.onFieldChange({ imageUrl: value || '' })}
             />
@@ -335,7 +265,7 @@ const BannerPanel = (props: IBannerPanelProps) => {
           <div className={styles.FieldSection}>
             <Label className={styles.FieldLabel}>{strings.BannerPanelFieldImageLinkUrlLabel}</Label>
             <TextField
-              value={props.settings.imageLinkUrl || ''}
+              value={props.settings.imageLinkUrl || 'https://upload.wikimedia.org/wikipedia/commons/1/13/Cute_kitten.jpg'}
               placeholder="https://..."
               onChange={(e, value) => props.onFieldChange({ imageLinkUrl: value || '' })}
             />

@@ -1,3 +1,10 @@
+:global(.ms-Layer),
+:global(.ms-Callout),
+:global(.ms-ContextualMenu-Callout),
+:global(.ms-Modal),
+:global(.ms-Dialog) {
+  z-index: 2147483647 !important;
+}
 .BannerPanelContainer {
   display: block;
 

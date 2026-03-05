@@ -1,17 +1,11 @@
 declare interface IMessageBannerApplicationCustomizerStrings {
   Title: string;
-  BannerBadgeNotVisibleToUsersMessage: string;
-  BannerBadgeIsVisibleToUsersMessage: string;
   BannerPanelHeaderText: string;
-  BannerPanelFieldMessageLabel: string;
-  BannerPanelFieldMessageDescription: string;
-  BannerPanelFieldBackgroundColorLabel: string;
-  BannerPanelFieldTextColorLabel: string;
-  BannerPanelFieldTextSizeLabel: string;
-  BannerPanelFieldBannerHeightLabel: string;
-  BannerPanelFieldVisibleStartDateLabel: string;
-  BannerPanelFieldVisibleStartDateEnabledLabel: string;
-  BannerPanelFieldVisibleStartDateDisabledLabel: string;
+
+  BannerPanelFieldImageUrlLabel: string;
+  BannerPanelFieldImageLinkUrlLabel: string;
+  BannerPanelFieldImageAltTextLabel: string;
+
   BannerPanelButtonSaveText: string;
   BannerPanelButtonCancelText: string;
   BannerPanelButtonResetToDefaultsText: string;

@@ -32,9 +32,13 @@ export default class MessageBannerApplicationCustomizer
     // Merge passed properties with default properties, overriding any defaults
     this._extensionProperties = { ...DEFAULT_PROPERTIES, ...this.properties };
 
-    // Don't show banner if message is empty
-    if (!this._extensionProperties.message) {
-      Log.info(LOG_SOURCE, `Skip rendering. No banner message configured.`);
+    // Don't show banner if *everything* is empty
+    const hasRenderableContent = !!(
+      (this._extensionProperties.imageUrl && this._extensionProperties.imageUrl.trim())
+    );
+
+    if (!hasRenderableContent) {
+      Log.info(LOG_SOURCE, `Skip rendering. No banner content configured.`);
       return;
     }
 

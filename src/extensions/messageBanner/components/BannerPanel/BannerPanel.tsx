@@ -1,3 +1,4 @@
+/*
 import * as React from 'react';
 import { IBannerPanelProps } from './IBannerPanelProps';
 import styles from './BannerPanel.module.scss';
@@ -71,6 +72,40 @@ const BannerPanel = (props: IBannerPanelProps) => {
             onChange={(e, value) => props.onFieldChange({ message: value })}
           />
         </div>
+                <div className={styles.FieldSection}>
+          <Label className={styles.FieldLabel}>{strings.BannerPanelFieldIconNameLabel}</Label>
+          <Label className={styles.FieldDescription}>{strings.BannerPanelFieldIconNameDescription}</Label>
+          <TextField
+            value={props.settings.iconName || ''}
+            onChange={(e, value) => props.onFieldChange({ iconName: value })}
+          />
+        </div>
+
+        <div className={styles.FieldSection}>
+          <Label className={styles.FieldLabel}>{strings.BannerPanelFieldImageUrlLabel}</Label>
+          <TextField
+            value={props.settings.imageUrl || ''}
+            placeholder="https://..."
+            onChange={(e, value) => props.onFieldChange({ imageUrl: value })}
+          />
+        </div>
+
+        <div className={styles.FieldSection}>
+          <Label className={styles.FieldLabel}>{strings.BannerPanelFieldImageLinkUrlLabel}</Label>
+          <TextField
+            value={props.settings.imageLinkUrl || ''}
+            placeholder="https://..."
+            onChange={(e, value) => props.onFieldChange({ imageLinkUrl: value })}
+          />
+        </div>
+
+        <div className={styles.FieldSection}>
+          <Label className={styles.FieldLabel}>{strings.BannerPanelFieldImageAltTextLabel}</Label>
+          <TextField
+            value={props.settings.imageAltText || ''}
+            onChange={(e, value) => props.onFieldChange({ imageAltText: value })}
+          />
+        </div>
 
         <div className={styles.FieldSection}>
           <Label className={styles.FieldLabel}>{strings.BannerPanelFieldTextColorLabel}</Label>
@@ -125,6 +160,194 @@ const BannerPanel = (props: IBannerPanelProps) => {
               value={new Date(props.settings.visibleStartDate)}
               onSelectDate={(value) => props.onFieldChange({ visibleStartDate: value.toDateString() })} />
           )}
+        </div>
+      </div>
+    </Panel>
+  );
+};
+
+export default BannerPanel;
+*/
+import * as React from 'react';
+import { IBannerPanelProps } from './IBannerPanelProps';
+import styles from './BannerPanel.module.scss';
+import * as strings from 'MessageBannerApplicationCustomizerStrings';
+
+import { PanelType, Panel } from 'office-ui-fabric-react/lib/Panel';
+import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
+import { TextField } from 'office-ui-fabric-react/lib/TextField';
+import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
+import { Label } from 'office-ui-fabric-react/lib/Label';
+import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
+
+const BannerPanel = (props: IBannerPanelProps) => {
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [uploadError, setUploadError] = React.useState<string | null>(null);
+
+  const getDigest = async (): Promise<string> => {
+    const webUrl = props.context.pageContext.web.absoluteUrl;
+
+    // fallback: לפעמים SPFx כבר שם digest זמין
+    const fallback = (props.context.pageContext as any)?.legacyPageContext?.formDigestValue;
+    try {
+      const res: SPHttpClientResponse = await props.context.spHttpClient.post(
+        `${webUrl}/_api/contextinfo`,
+        SPHttpClient.configurations.v1,
+        {
+          headers: {
+            accept: 'application/json;odata=verbose',
+            'content-type': 'application/json;odata=verbose'
+          }
+        }
+      );
+
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(`contextinfo failed. HTTP ${res.status}. ${t}`);
+      }
+
+      const json: any = await res.json();
+      const digest = json?.d?.GetContextWebInformation?.FormDigestValue;
+      if (!digest) throw new Error('contextinfo returned no FormDigestValue');
+
+      return digest;
+    } catch (e) {
+      if (fallback) return fallback;
+      throw e;
+    }
+  };
+  const uploadToSiteAssets = async (file: File): Promise<string> => {
+    const webUrl = props.context.pageContext.web.absoluteUrl;
+    const webRel = (props.context.pageContext.web.serverRelativeUrl || '').replace(/\/$/, '');
+    const folderRel = `${webRel}/SiteAssets`.replace(/'/g, "''");
+
+    const digest = await getDigest();
+    const buffer = await file.arrayBuffer();
+    const safeName = file.name.replace(/'/g, "''");
+
+    const uploadUrl =
+      `${webUrl}/_api/web/GetFolderByServerRelativeUrl('${folderRel}')/Files/add(url='${safeName}',overwrite=true)`;
+
+    const res: SPHttpClientResponse = await props.context.spHttpClient.post(
+      uploadUrl,
+      SPHttpClient.configurations.v1,
+      {
+        headers: {
+          accept: 'application/json;odata=nometadata',
+          'X-RequestDigest': digest
+        },
+        body: buffer as any
+      }
+    );
+
+    const out: any = await res.json();
+    if (!res.ok) {
+      throw new Error(`Upload failed. HTTP ${res.status}`);
+    }
+    //const serverRelUrl = out.ServerRelativeUrl || out?.d?.ServerRelativeUrl;
+    //return `${window.location.origin}${serverRelUrl}`;
+    const serverRelUrl =
+    out?.ServerRelativeUrl ||
+    out?.d?.ServerRelativeUrl ||
+    out?.ServerRelativePath?.DecodedUrl ||
+    out?.d?.ServerRelativePath?.DecodedUrl;
+
+    // FALLBACK: אם התגובה לא מחזירה URL – נבנה אותו בעצמנו
+    const fallbackRel = `${webRel}/SiteAssets/${encodeURIComponent(file.name)}`;
+    const finalRel = serverRelUrl || fallbackRel;
+
+    return `${window.location.origin}${finalRel}`;
+  };
+
+  const onPickFile = async (ev: React.ChangeEvent<HTMLInputElement>) => {
+  const input = ev.currentTarget;
+  const file = input.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadError(null);
+      setIsUploading(true);
+      const url = await uploadToSiteAssets(file);
+      props.onFieldChange({ imageUrl: url });
+    } catch (e: any) {
+      setUploadError(e?.message || 'Upload failed');
+    } finally {
+      setIsUploading(false);
+      input.value = ''; // מאפשר לבחור שוב אותו קובץ
+    }
+  };
+
+  return (
+    <Panel
+      isOpen={props.isOpen}
+      type={PanelType.smallFixedFar}
+      onDismiss={props.onCancelOrDismiss}
+      headerText={strings.BannerPanelHeaderText}
+      isLightDismiss={true}
+    >
+      <div className={styles.BannerPanelContainer}>
+        <div className={styles.FooterButtons}>
+          <PrimaryButton
+            text={strings.BannerPanelButtonSaveText}
+            onClick={props.onSave}
+            disabled={props.isSaving}
+          />
+          <DefaultButton
+            text={strings.BannerPanelButtonCancelText}
+            onClick={props.onCancelOrDismiss}
+            disabled={props.isSaving}
+          />
+          {props.isSaving && <Spinner size={SpinnerSize.small} />}
+        </div>
+
+        <div
+          className={styles.ResetToDefaults}
+          onClick={props.resetToDefaults}
+          role="button"
+        >
+          {strings.BannerPanelButtonResetToDefaultsText}
+        </div>
+
+        <div className={styles.FieldContainer}>
+          <div className={styles.FieldSection}>
+            <Label className={styles.FieldLabel}>Text</Label>
+            <TextField
+              value={(props.settings as any).text || ''}
+              onChange={(e, value) => props.onFieldChange({ text: value || '' })}
+            />
+          </div>
+
+          <div className={styles.FieldSection}>
+            <Label className={styles.FieldLabel}>Upload image from computer</Label>
+            <input type="file" accept="image/*" onChange={onPickFile} />
+            {isUploading && <div>Uploading...</div>}
+            {uploadError && <div style={{ color: 'red' }}>{uploadError}</div>}
+          </div>
+          <div className={styles.FieldSection}>
+            <Label className={styles.FieldLabel}>{strings.BannerPanelFieldImageUrlLabel}</Label>
+            <TextField
+              value={props.settings.imageUrl || ''}
+              placeholder="https://..."
+              onChange={(e, value) => props.onFieldChange({ imageUrl: value || '' })}
+            />
+          </div>
+
+          <div className={styles.FieldSection}>
+            <Label className={styles.FieldLabel}>{strings.BannerPanelFieldImageLinkUrlLabel}</Label>
+            <TextField
+              value={props.settings.imageLinkUrl || ''}
+              placeholder="https://..."
+              onChange={(e, value) => props.onFieldChange({ imageLinkUrl: value || '' })}
+            />
+          </div>
+
+          <div className={styles.FieldSection}>
+            <Label className={styles.FieldLabel}>{strings.BannerPanelFieldImageAltTextLabel}</Label>
+            <TextField
+              value={props.settings.imageAltText || ''}
+              onChange={(e, value) => props.onFieldChange({ imageAltText: value || '' })}
+            />
+          </div>
         </div>
       </div>
     </Panel>

@@ -1,3 +1,4 @@
+/*
 export interface IMessageBannerProperties {
   message: string;
   textColor: string;
@@ -7,6 +8,10 @@ export interface IMessageBannerProperties {
   visibleStartDate: string;
   enableSetPreAllocatedTopHeight: boolean;
   disableSiteAdminUI: boolean;
+  iconName: string;
+  imageUrl: string;
+  imageLinkUrl: string;
+  imageAltText: string;
 }
 
 
@@ -20,4 +25,21 @@ export const DEFAULT_PROPERTIES: IMessageBannerProperties = {
   visibleStartDate: null,
   enableSetPreAllocatedTopHeight: false,
   disableSiteAdminUI: false,
+  iconName: "",
+  imageUrl: "",
+  imageLinkUrl: "",
+  imageAltText: "",
+};*/
+export interface IMessageBannerProperties {
+  imageUrl: string;
+  imageLinkUrl: string;
+  imageAltText: string;
+  text: string;
+}
+
+export const DEFAULT_PROPERTIES: IMessageBannerProperties = {
+  imageUrl: "",
+  imageLinkUrl: "",
+  imageAltText: "",
+  text: "",
 };

@@ -1,24 +1,116 @@
+:global(#spTopPlaceholder) {
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+:global(#spTopPlaceholder > div) {
+  height: 0 !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
 .BannerContainer {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: left;
+  padding-left: 20px;
   position: relative;
+  //top:20px;
   vertical-align: middle;
   transition: all 250ms;
   font-weight: 600;
   cursor: default;
-  border-bottom: 1px solid #eaeaea;
   height: 0px;
-
+  overflow: visible;
   a, a:link, a:visited, a:hover, a:active {
     color: inherit;
   }
 
+    .BannerContent {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 100%;
+  }
+
+  .BannerIcon {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .BannerImageLink {
+    display: flex;
+    align-items: center;
+  }
+  .ImageWrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .ImageWrap {
+    position: relative;
+    top: 20px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .BannerImage {
+    height: 32px;
+    width: auto;
+    cursor: pointer;
+    display: block;
+  }
+  /*
+  .BannerImage {
+    position: relative;
+    top: 44px;
+    max-height: 100%;
+    height: 24px;
+    width: auto;
+    cursor: pointer;
+  }*/
+
+  .BannerMessage {
+    display: block;
+    line-height: 1.2;
+  }
+
   .EditButtonIcon {
     position: absolute;
-    right: 1%;
+    left: 100%;
     top: 50%;
-    transform: translate(-1%,-50%);
+    transform: translate(4px, -50%);
+
+    /* hidden by default */
+    opacity: 0;
+    //pointer-events: none;
+    transition: opacity 120ms ease;
+    transition-delay: 2000ms;
+
+    /* make button small */
+    height: 16px;
+    width: 16px;
+    min-width: 16px;
+    padding: 0;
+  }
+
+  /* show only when hovering the image area */
+  .ImageWrap:hover .EditButtonIcon {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* force icon glyph size to 6px */
+  .EditButtonIcon :global(i.ms-Icon),
+  .EditButtonIcon :global(.ms-Button-icon) {
+    font-size: 10px !important;
+    line-height: 10px !important;
+    height: 10px !important;
+    width: 10px !important;
+    margin: 0 !important;
   }
 
   .AdminUserVisibilityBadge {
@@ -34,5 +126,80 @@
     left: 1%;
     top: 50%;
     transform: translate(-1%,-50%);
+  }
+
+
+  .ImageWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.EditButtonIcon {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translate(2px, -50%);
+  z-index: 10;
+
+  opacity: 0;
+  //pointer-events: none;
+  transition: opacity 120ms ease;
+  transition-delay: 2000ms;
+
+  height: 16px;
+  width: 16px;
+  min-width: 16px;
+  padding: 0;
+}
+
+/* יופיע רק בריחוף על התמונה */
+.ImageWrap:hover .EditButtonIcon {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* להכריח את האייקון להיות 6px */
+.EditButtonIcon :global(i.ms-Icon),
+.EditButtonIcon :global(.ms-Button-icon) {
+  font-size: 10px !important;
+  line-height: 10px !important;
+  height: 10px !important;
+  width: 10px !important;
+  margin: 0 !important;
+}
+}
+
+.BannerRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap; /* במובייל הטקסט ירד שורה אם אין מקום */
+  direction: ltr;  /* מבטיח שהתמונה תהיה משמאל והטקסט מימין */
+}
+
+.BannerText {
+  direction: rtl;       /* כדי שטקסט בעברית ייראה טבעי */
+  text-align: right;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 70vw;
+  font-size: 14px;
+}
+
+.BannerImage {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+
+@media (max-width: 480px) {
+  .BannerText {
+    max-width: 90vw;
+    font-size: 13px;
+  }
+
+  .BannerImage {
+    height: 24px;
   }
 }

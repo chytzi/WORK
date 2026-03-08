@@ -38,8 +38,8 @@ export interface IMessageBannerProperties {
 }
 
 export const DEFAULT_PROPERTIES: IMessageBannerProperties = {
-  imageUrl: "",
-  imageLinkUrl: "",
-  imageAltText: "",
-  text: "",
+  imageUrl: "https://upload.wikimedia.org/wikipedia/commons/1/13/Cute_kitten.jpg",
+  imageLinkUrl: "https://upload.wikimedia.org/wikipedia/commons/1/13/Cute_kitten.jpg",
+  imageAltText: "HELLO",
+  text: "HELLO",
 };
